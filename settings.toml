@@ -1,0 +1,15 @@
+# -*- coding: utf-8 -*-
+
+# advantage of using settings.py - can use black to check syntax and format
+# supports comments
+
+[default]
+EEGML_SEC01_DATADIR = "/mnt/data1/eegdbs/SEC-0.1"
+EEGML_TEMPLE_EEG_V1 = "/mnt/data1/eegdbs/TUH/temple/v1.0.0"
+EEGML_TEMPLE_SZ_V151 = "/mnt/data1/eegdbs/TUH/temple/tuh_eeg_seizure/v1.5.1"
+EEGML_STEV_NEONATES = "/mnt/data1/eegdbs/stevenson_neonatal_eeg"
+
+[example_full_train]
+
+
+[example_development]
