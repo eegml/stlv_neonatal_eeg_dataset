@@ -14,9 +14,9 @@ from IPython.display import clear_output
 import numpy as np
 import pandas as pd
 import h5py
+import eeghdf
 
-
-def download_stevenson_eeg(path, selected_eegs):
+def load_stevenson_eeg(path, selected_eegs):
     """Extracts the stevenson data from the hdf folder and csv files.
     Parameters
     ----------
@@ -40,6 +40,31 @@ def download_stevenson_eeg(path, selected_eegs):
             acc_annot += pd.read_csv(csvfile) # Accumalitive Dataframe of all 3 expert annotations
     return hdf_files, acc_annot
 
+
+def load_stevenson_eeghdf(path, selected_eegs):
+    """Extracts the stevenson data from the hdf folder and csv files.
+    Parameters
+    ----------
+    path : path to directory that contains the hdf and csv files
+    selected_eegs : the range of eegs to be extracted
+    Returns
+    -------
+    eeghdf_files : a list of the h5py files
+    acc_annot : a pandas dataframe containing the accumulative
+                agreement of the experts
+    """
+    eeghdf_files = []
+    for ii in selected_eegs:
+        eeghdf_files.append(eeghdf.Eeghdf('%s/hdf_w_annotations/eeg%s.annot.eeg.h5' % (path, ii)))
+    
+    annots = [('annotations_2017_A.csv'), ('annotations_2017_B.csv'), ('annotations_2017_C.csv')]
+    acc_annot = 0
+    for annot in annots:
+        with open(op.join(path,annot)) as csvfile:
+            acc_annot += pd.read_csv(csvfile) # Accumalitive Dataframe of all 3 expert annotations
+    return eeghdf_files, acc_annot
+    
+
 def whiten_X(X):
     X = X - np.mean(X, axis = 0) # zero-center the data
     cov = np.dot(X.T, X) / X.shape[0]
@@ -53,8 +78,8 @@ def process_stevenson_data(hdf_files, s_freq, seg_time, n_channels, whiten):
     mapping = []
     seg_len = seg_time * s_freq
     for i in range(len(hdf_files)):
-        clear_output(wait=True)
-        print('Downloading EEG #%s' % (i))
+        #clear_output(wait=True)
+        #print('Loading EEG #%s' % (i))
         rec = (hdf_files[i])['record-0']
         n_segments = (rec['signals'][0].size - 1) // seg_len # Number of data points divided by segment length
         eeg_data = np.empty([n_segments,0,seg_len])
@@ -79,7 +104,7 @@ def process_stevenson_data(hdf_files, s_freq, seg_time, n_channels, whiten):
     return data, mapping
 
 def process_stevenson_labels(annot, selected_eegs, sz_agree_crit, seg_time):
-    print('Downloading Labels')
+    print('Loading Labels')
     y = np.empty([0])
     for i in selected_eegs:
         col = (annot.iloc[:, i-1:i]).dropna() # Grabbing a column and dropping NaN values
@@ -110,9 +135,11 @@ def stevenson_eeg_preprocess(path, s_freq = 256, seg_time = 5, selected_eegs = n
     y : ndarray, shape (n_segments,), 1 for seizure 0 for non seizure
     mapping : ndarray, shape (n_segments, 3), contains filename and segment start and end times
     """
-    hdf, annot = download_stevenson_eeg(path, selected_eegs)
+    hdf, annot = load_stevenson_eeg(path, selected_eegs)
     data, mapping = process_stevenson_data(hdf, s_freq, seg_time, n_channels, whiten)
     y = process_stevenson_labels(annot, selected_eegs, sz_agree_criteria, seg_time)
-    clear_output(wait=True)
-    print('Download Complete')
+    #clear_output(wait=True)
+    print('Loading Complete')
     return data, y, mapping
+
+
